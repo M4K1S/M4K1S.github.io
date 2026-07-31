@@ -174,8 +174,20 @@ function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).
 function valueFor(tab,key){const e=entries[key];if(!e)return 0;if(tab==='all')return config.categories.reduce((sum,c)=>sum+(Number(e[c.id])||0),0);if(tab==='sleep')return Number(e.sleep)||0;return Number(e[tab])||0}
 function maxValueForYear(tab){let max=0;Object.keys(entries).forEach(key=>{if(key.startsWith(String(currentYear)))max=Math.max(max,valueFor(tab,key))});return max}
 function relativeScore(tab,key){const value=valueFor(tab,key),max=maxValueForYear(tab);return value>0&&max>0?Math.round(value/max*100):0}
-function productivityScore(key){return relativeScore('all',key)}
-function levelFor(tab,key){const value=valueFor(tab,key);if(value<=0)return 0;const max=maxValueForYear(tab);if(max<=0)return 0;const ratio=value/max;if(ratio<=.25)return 1;if(ratio<=.5)return 2;if(ratio<=.75)return 3;return 4}
+function productivityScore(key){
+const e=entries[key];if(!e)return 0;
+const totalHours=valueFor('all',key),sleep=Math.max(0,Math.min(100,Number(e.sleep)||0));
+if(totalHours<=0&&sleep<=0)return 0;
+const hoursScore=Math.min(100,totalHours/13*100);
+return Math.max(0,Math.min(100,Math.round((hoursScore+sleep)/2)));
+}
+function levelFor(tab,key){
+const value=tab==='all'?productivityScore(key):valueFor(tab,key);if(value<=0)return 0;
+let ratio;
+if(tab==='all'||tab==='sleep')ratio=value/100;
+else{const max=maxValueForYear(tab);if(max<=0)return 0;ratio=value/max;}
+if(ratio<=.25)return 1;if(ratio<=.5)return 2;if(ratio<=.75)return 3;return 4;
+}
 function colorFor(tab){if(tab==='all')return resolveColor('var(--all)');if(tab==='sleep')return resolveColor('var(--sleep)');const c=config.categories.find(x=>x.id===tab);return c?resolveColor(c.color):resolveColor('var(--all)')}
 function hexToRgba(hex,a){const h=hex.replace('#','');return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`}
 const EDIT_ICON='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
@@ -196,7 +208,7 @@ function renderGrid(){
 document.getElementById('dayLabels').innerHTML='<div></div>'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>i%2?`<div>${d}</div>`:'<div></div>').join('');
 const start=new Date(currentYear,0,1),end=new Date(currentYear,11,31),pad=start.getDay(),days=Math.round((end-start)/86400000)+1,weeks=Math.ceil((pad+days)/7),cells=document.getElementById('cells');cells.style.gridTemplateColumns=`repeat(${weeks},13px)`;cells.innerHTML='';
 const color=colorFor(activeTab),todayStr=dateKey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()),monthStarts=[];
-for(let i=0;i<weeks*7;i++){const cell=document.createElement('div');if(i<pad||i>=pad+days){cell.className='cell empty';cells.appendChild(cell);continue}const dt=new Date(currentYear,0,1+i-pad),key=dateKey(dt.getFullYear(),dt.getMonth(),dt.getDate());if(dt.getDate()===1)monthStarts.push({month:dt.getMonth(),col:Math.floor(i/7)});const lvl=levelFor(activeTab,key);cell.className='cell'+(key===todayStr?' today':'');cell.style.background=lvl?'': 'var(--panel-2)';if(lvl){const opacity=[0,.22,.42,.66,.92][lvl];cell.style.background=hexToRgba(color,opacity);}const e=entries[key];let tip=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});if(e){if(activeTab==='all')tip+=` · ${fmtHM(valueFor('all',key))} total`;else if(activeTab==='sleep')tip+=e.sleep?` · sleep ${e.sleep}`:' · no data';else tip+=e[activeTab]?` · ${fmtHM(e[activeTab])}`:' · 0h'}if(milestones[key]){tip+=` ★ ${milestones[key]}`;cell.style.outline=`1.5px solid ${resolveColor('var(--all)')}`;cell.style.outlineOffset='1px'}cell.dataset.tip=tip;cell.onclick=()=>openDayModal(key,dt);cells.appendChild(cell)}
+for(let i=0;i<weeks*7;i++){const cell=document.createElement('div');if(i<pad||i>=pad+days){cell.className='cell empty';cells.appendChild(cell);continue}const dt=new Date(currentYear,0,1+i-pad),key=dateKey(dt.getFullYear(),dt.getMonth(),dt.getDate());if(dt.getDate()===1)monthStarts.push({month:dt.getMonth(),col:Math.floor(i/7)});const lvl=levelFor(activeTab,key);cell.className='cell'+(key===todayStr?' today':'');cell.style.background=lvl?'': 'var(--panel-2)';if(lvl){const opacity=[0,.22,.42,.66,.92][lvl];cell.style.background=hexToRgba(color,opacity);}const e=entries[key];let tip=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});if(e){if(activeTab==='all')tip+=` · ${productivityScore(key)}%`;else if(activeTab==='sleep')tip+=e.sleep?` · ${Math.round(Number(e.sleep))}%`:' · 0%';else tip+=e[activeTab]?` · ${relativeScore(activeTab,key)}%`:' · 0%'}if(milestones[key]){tip+=` ★ ${milestones[key]}`;cell.style.outline=`1.5px solid ${resolveColor('var(--all)')}`;cell.style.outlineOffset='1px'}cell.dataset.tip=tip;cell.onclick=()=>openDayModal(key,dt);cells.appendChild(cell)}
 const labels=document.getElementById('monthLabels');labels.style.gridTemplateColumns=`repeat(${weeks},13px)`;const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],slots=new Array(weeks).fill('');monthStarts.forEach(m=>slots[m.col]=names[m.month]);labels.innerHTML=slots.map(s=>`<div>${s}</div>`).join('');
 const legend=document.getElementById('legend');let h='Less ';for(let l=0;l<=4;l++){const opacity=[0,.22,.42,.66,.92][l];h+=`<div class="cell" style="background:${l?hexToRgba(color,opacity):'var(--panel-2)'}"></div>`;}legend.innerHTML=h+' More';
 }
