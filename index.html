@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Prod Grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -57,7 +58,53 @@ header{display:flex;justify-content:space-between;align-items:flex-end;margin-bo
 #authGate{position:fixed;inset:0;background:radial-gradient(ellipse at top,#161923 0%,var(--bg) 55%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200}#authGate.hidden{display:none}
 .auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px}.auth-card h2{font-family:Space Grotesk,sans-serif;font-size:24px;margin-bottom:5px}.auth-card p{color:var(--text-dim);font-size:13px;line-height:1.5;margin-bottom:18px}.auth-input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 11px;font-size:13px;margin-bottom:10px;outline:none}.auth-input:focus{border-color:var(--all)}.auth-error{color:var(--workout);font-size:12px;min-height:18px;margin:5px 0 10px}.auth-toggle{margin-top:12px;text-align:center;color:var(--text-dim);font-size:12px;cursor:pointer}.auth-toggle:hover{color:var(--text)}
 #userBar{display:flex;align-items:center;gap:10px;color:var(--text-dim);font-size:11px;font-family:JetBrains Mono,monospace}#userBar button{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:11px}
-@media(max-width:560px){.title{font-size:24px}.stat .num{font-size:20px}}
+@media(max-width:768px){
+body{padding:16px 12px calc(30px + env(safe-area-inset-bottom));}
+.wrap{max-width:100%;}
+header{flex-direction:column;align-items:stretch;gap:14px;margin-bottom:20px;}
+header>div:first-child{min-width:0;}
+.year-nav{width:100%;justify-content:space-between;order:3;}
+.year-nav button{width:42px;height:42px;font-size:18px;}
+#userBar{width:100%;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+#userBar span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#userBar button{min-height:40px;padding:8px 12px;}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:18px;}
+.stat{padding:12px;min-width:0;}
+.tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin:0 -12px 16px;padding-left:12px;padding-right:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab,.add-cat{flex:0 0 auto;min-height:40px;display:flex;align-items:center;}
+.grid-card{padding:16px 14px 16px;border-radius:14px;overflow:hidden;}
+.heatmap-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;overscroll-behavior-x:contain;}
+.months-and-grid{flex:0 0 auto;}
+.cell{touch-action:manipulation;}
+.cell:hover{transform:none;}
+.cell:hover::after{display:none;}
+.overlay{align-items:flex-end;padding:0;}
+.modal{max-width:none;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;}
+.modal-actions{position:sticky;bottom:0;background:linear-gradient(transparent,var(--panel) 28%);padding-top:18px;}
+.btn{min-height:44px;}
+.hour-input{width:64px;min-height:40px;font-size:16px;}
+.hm-row{justify-content:flex-start;flex-wrap:wrap;}
+.newcat-row input,.auth-input{font-size:16px;min-height:44px;}
+.swatch-row{flex-wrap:wrap;}
+.swatch{width:30px;height:30px;}
+.ms-list-card .ms-row{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;}
+.ms-date,.ms-label{min-width:0;}
+.ms-label{grid-column:1/2;overflow-wrap:anywhere;}
+.countdown{grid-column:2/3;grid-row:1/2;}
+.ms-list-card .icon-btn,.ms-rm{grid-row:2/3;}
+}
+@media(max-width:430px){
+.title{font-size:24px;}
+.subtitle{font-size:12px;line-height:1.45;}
+.stat .num{font-size:20px;}
+.stat .lbl{font-size:10px;}
+.grid-card{padding:14px 12px;}
+.daylabels{font-size:9px;}
+.monthlabels{font-size:9px;}
+.legend{justify-content:center;}
+.auth-card{padding:22px 18px;}
+}
 </style>
 </head>
 <body>
@@ -91,13 +138,13 @@ header{display:flex;justify-content:space-between;align-items:flex-end;margin-bo
 
 <script>
 const DEFAULT_CATS=[
-{id:'work',name:'Work',color:'var(--work)',max:6,archived:false},
-{id:'workout',name:'Workouts',color:'var(--workout)',max:2,archived:false},
-{id:'school',name:'School',color:'var(--school)',max:5,archived:false},
-{id:'projects',name:'Projects',color:'var(--projects)',max:4,archived:false}
+{id:'work',name:'Work',color:'var(--work)',archived:false},
+{id:'workout',name:'Workouts',color:'var(--workout)',archived:false},
+{id:'school',name:'School',color:'var(--school)',archived:false},
+{id:'projects',name:'Projects',color:'var(--projects)',archived:false}
 ];
 const SWATCHES=['#5b8cff','#ff5c7a','#b47cff','#3ddc97','#ffcc66','#ff9f43','#5be0d0','#e08cff','#8cd6ff','#ffab5b'];
-let config={categories:DEFAULT_CATS,goalHours:13};
+let config={categories:DEFAULT_CATS};
 let entries={},milestones={},currentYear=new Date().getFullYear(),activeTab='all',selectedDate=null;
 const resolveColor=c=>c.startsWith('var(')?getComputedStyle(document.documentElement).getPropertyValue(c.slice(4,-1)).trim():c;
 const activeCategories=()=>config.categories.filter(c=>!c.archived);
@@ -111,8 +158,8 @@ try{const r=await window.storage.get('milestones',false);if(r?.value)milestones=
 normalizeConfig();render();
 }
 function normalizeConfig(){
-config.categories=(config.categories||[]).map(c=>({...c,archived:!!c.archived,max:c.max||4}));
-config.goalHours=config.goalHours||13;
+config.categories=(config.categories||[]).map(({max,...c})=>({...c,archived:!!c.archived}));
+delete config.goalHours;
 }
 let toastTimer=null;
 function showToast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#050608;border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:10px;font-size:13px;z-index:300;box-shadow:0 6px 24px rgba(0,0,0,.4)';document.body.appendChild(el)}el.textContent=msg;el.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.opacity=0,3500)}
@@ -124,13 +171,11 @@ const saveConfig=()=>saveWithRetry('config',JSON.stringify(config));
 const saveEntries=()=>saveWithRetry('entries',JSON.stringify(entries));
 const saveMilestones=()=>saveWithRetry('milestones',JSON.stringify(milestones));
 function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
-function productivityScore(key){const e=entries[key];if(!e)return 0;let total=0;config.categories.forEach(c=>total+=(Number(e[c.id])||0));return Math.max(0,Math.min(100,Math.round(total/config.goalHours*100)))}
-function levelFor(tab,key){
-const e=entries[key];if(!e)return 0;
-if(tab==='all'){const s=productivityScore(key);if(!s)return 0;return s<25?1:s<50?2:s<75?3:4}
-if(tab==='sleep'){const s=Number(e.sleep)||0;if(!s)return 0;return s<25?1:s<50?2:s<75?3:4}
-const cat=config.categories.find(c=>c.id===tab);if(!cat)return 0;const v=Number(e[tab])||0;if(!v)return 0;const max=cat.max||4;return v<max*.25?1:v<max*.5?2:v<max*.75?3:4
-}
+function valueFor(tab,key){const e=entries[key];if(!e)return 0;if(tab==='all')return config.categories.reduce((sum,c)=>sum+(Number(e[c.id])||0),0);if(tab==='sleep')return Number(e.sleep)||0;return Number(e[tab])||0}
+function maxValueForYear(tab){let max=0;Object.keys(entries).forEach(key=>{if(key.startsWith(String(currentYear)))max=Math.max(max,valueFor(tab,key))});return max}
+function relativeScore(tab,key){const value=valueFor(tab,key),max=maxValueForYear(tab);return value>0&&max>0?Math.round(value/max*100):0}
+function productivityScore(key){return relativeScore('all',key)}
+function levelFor(tab,key){const value=valueFor(tab,key);if(value<=0)return 0;const max=maxValueForYear(tab);if(max<=0)return 0;const ratio=value/max;if(ratio<=.25)return 1;if(ratio<=.5)return 2;if(ratio<=.75)return 3;return 4}
 function colorFor(tab){if(tab==='all')return resolveColor('var(--all)');if(tab==='sleep')return resolveColor('var(--sleep)');const c=config.categories.find(x=>x.id===tab);return c?resolveColor(c.color):resolveColor('var(--all)')}
 function hexToRgba(hex,a){const h=hex.replace('#','');return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`}
 const EDIT_ICON='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
@@ -151,9 +196,9 @@ function renderGrid(){
 document.getElementById('dayLabels').innerHTML='<div></div>'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>i%2?`<div>${d}</div>`:'<div></div>').join('');
 const start=new Date(currentYear,0,1),end=new Date(currentYear,11,31),pad=start.getDay(),days=Math.round((end-start)/86400000)+1,weeks=Math.ceil((pad+days)/7),cells=document.getElementById('cells');cells.style.gridTemplateColumns=`repeat(${weeks},13px)`;cells.innerHTML='';
 const color=colorFor(activeTab),todayStr=dateKey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()),monthStarts=[];
-for(let i=0;i<weeks*7;i++){const cell=document.createElement('div');if(i<pad||i>=pad+days){cell.className='cell empty';cells.appendChild(cell);continue}const dt=new Date(currentYear,0,1+i-pad),key=dateKey(dt.getFullYear(),dt.getMonth(),dt.getDate());if(dt.getDate()===1)monthStarts.push({month:dt.getMonth(),col:Math.floor(i/7)});const lvl=levelFor(activeTab,key);cell.className='cell'+(key===todayStr?' today':'');cell.style.background=lvl?'': 'var(--panel-2)';if(lvl)cell.style.background=hexToRgba(color,.18+lvl*.2);const e=entries[key];let tip=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});if(e){if(activeTab==='all')tip+=` · ${productivityScore(key)}%`;else if(activeTab==='sleep')tip+=e.sleep?` · sleep ${e.sleep}`:' · no data';else tip+=e[activeTab]?` · ${fmtHM(e[activeTab])}`:' · 0h'}if(milestones[key]){tip+=` ★ ${milestones[key]}`;cell.style.outline=`1.5px solid ${resolveColor('var(--all)')}`;cell.style.outlineOffset='1px'}cell.dataset.tip=tip;cell.onclick=()=>openDayModal(key,dt);cells.appendChild(cell)}
+for(let i=0;i<weeks*7;i++){const cell=document.createElement('div');if(i<pad||i>=pad+days){cell.className='cell empty';cells.appendChild(cell);continue}const dt=new Date(currentYear,0,1+i-pad),key=dateKey(dt.getFullYear(),dt.getMonth(),dt.getDate());if(dt.getDate()===1)monthStarts.push({month:dt.getMonth(),col:Math.floor(i/7)});const lvl=levelFor(activeTab,key);cell.className='cell'+(key===todayStr?' today':'');cell.style.background=lvl?'': 'var(--panel-2)';if(lvl){const opacity=[0,.22,.42,.66,.92][lvl];cell.style.background=hexToRgba(color,opacity);}const e=entries[key];let tip=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});if(e){if(activeTab==='all')tip+=` · ${fmtHM(valueFor('all',key))} total`;else if(activeTab==='sleep')tip+=e.sleep?` · sleep ${e.sleep}`:' · no data';else tip+=e[activeTab]?` · ${fmtHM(e[activeTab])}`:' · 0h'}if(milestones[key]){tip+=` ★ ${milestones[key]}`;cell.style.outline=`1.5px solid ${resolveColor('var(--all)')}`;cell.style.outlineOffset='1px'}cell.dataset.tip=tip;cell.onclick=()=>openDayModal(key,dt);cells.appendChild(cell)}
 const labels=document.getElementById('monthLabels');labels.style.gridTemplateColumns=`repeat(${weeks},13px)`;const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],slots=new Array(weeks).fill('');monthStarts.forEach(m=>slots[m.col]=names[m.month]);labels.innerHTML=slots.map(s=>`<div>${s}</div>`).join('');
-const legend=document.getElementById('legend');let h='Less ';for(let l=0;l<=4;l++)h+=`<div class="cell" style="background:${l?'': 'var(--panel-2)'}${l?` ;background:${hexToRgba(color,.18+l*.2)}`:''}"></div>`;legend.innerHTML=h+' More';
+const legend=document.getElementById('legend');let h='Less ';for(let l=0;l<=4;l++){const opacity=[0,.22,.42,.66,.92][l];h+=`<div class="cell" style="background:${l?hexToRgba(color,opacity):'var(--panel-2)'}"></div>`;}legend.innerHTML=h+' More';
 }
 function render(){document.getElementById('yearNum').textContent=currentYear;renderTabs();renderStats();renderGrid();renderMilestoneList()}
 prevYear.onclick=()=>{currentYear--;render()};nextYear.onclick=()=>{currentYear++;render()};
@@ -181,17 +226,17 @@ let newCatColor=SWATCHES[0];
 function openCatModal(){renderCatModal();catOverlay.classList.add('show')}function closeCatModal(){catOverlay.classList.remove('show')}
 function renderCatModal(){
 const list=allCategories().map(c=>{const col=resolveColor(c.color);return `<div class="row"><span class="dot" style="background:${col}"></span><span class="catlabel">${c.name}${c.archived?' <span style="color:var(--text-dim)">(archived)</span>':''}</span><button class="icon-btn" onclick="openCatEditDirect('${c.id}')">${EDIT_ICON}</button><button class="icon-btn rm" onclick="toggleArchive('${c.id}')">${c.archived?'↩':'▣'}</button></div>`}).join('');
-catModal.innerHTML=`<button class="close-x" onclick="closeCatModal()">✕</button><h3>Categories</h3><div class="mdate">Archive old categories to clean up the tabs. Historical entries remain intact.</div><div class="catlist">${list||'No categories yet.'}</div><div class="newcat-row"><input id="newCatName" placeholder="e.g. Reading" maxlength="20"></div><div class="swatch-row">${SWATCHES.map(s=>`<div class="swatch ${s===newCatColor?'sel':''}" style="background:${s}" onclick="pickSwatch('${s}')"></div>`).join('')}</div><div class="field"><label>Daily hour cap for full color <span class="valtext" id="capVal">4h</span></label><input id="newCap" type="range" min="1" max="10" step=".5" value="4" oninput="capVal.textContent=this.value+'h'"></div><div class="modal-actions"><button class="btn" onclick="closeCatModal()">Close</button><button class="btn primary" onclick="addCat()">Add category</button></div>`;
+catModal.innerHTML=`<button class="close-x" onclick="closeCatModal()">✕</button><h3>Categories</h3><div class="mdate">Archive old categories to clean up the tabs. Historical entries remain intact.</div><div class="catlist">${list||'No categories yet.'}</div><div class="newcat-row"><input id="newCatName" placeholder="e.g. Reading" maxlength="20"></div><div class="swatch-row">${SWATCHES.map(s=>`<div class="swatch ${s===newCatColor?'sel':''}" style="background:${s}" onclick="pickSwatch('${s}')"></div>`).join('')}</div><div class="modal-actions"><button class="btn" onclick="closeCatModal()">Close</button><button class="btn primary" onclick="addCat()">Add category</button></div>`;
 }
 function pickSwatch(s){newCatColor=s;renderCatModal()}
 async function toggleArchive(id){const c=config.categories.find(x=>x.id===id);if(!c)return;c.archived=!c.archived;if(activeTab===id&&c.archived)activeTab='all';await saveConfig();render();renderCatModal()}
-async function addCat(){const name=document.getElementById('newCatName').value.trim();if(!name)return;const cap=parseFloat(document.getElementById('newCap').value);const id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36).slice(-4);config.categories.push({id,name,color:newCatColor,max:cap,archived:false});await saveConfig();render();renderCatModal()}
+async function addCat(){const name=document.getElementById('newCatName').value.trim();if(!name)return;const id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36).slice(-4);config.categories.push({id,name,color:newCatColor,archived:false});await saveConfig();render();renderCatModal()}
 
-let editingCatId=null,editDraftColor=null,editDraftMax=4;
-function openCatEditDirect(id){const c=config.categories.find(x=>x.id===id);if(!c)return;editingCatId=id;editDraftColor=resolveColor(c.color);editDraftMax=c.max||4;renderCatEditor();catEditOverlay.classList.add('show')}
+let editingCatId=null,editDraftColor=null;
+function openCatEditDirect(id){const c=config.categories.find(x=>x.id===id);if(!c)return;editingCatId=id;editDraftColor=resolveColor(c.color);renderCatEditor();catEditOverlay.classList.add('show')}
 function closeCatEditor(){catEditOverlay.classList.remove('show');editingCatId=null}
-function renderCatEditor(){const c=config.categories.find(x=>x.id===editingCatId);if(!c)return;catEditModal.innerHTML=`<button class="close-x" onclick="closeCatEditor()">✕</button><h3>Edit category</h3><div class="mdate">${c.name}</div><div class="field"><label>Name</label><input type="text" id="editCatName" value="${c.name.replace(/"/g,'&quot;')}" style="width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px"></div><div class="field"><label>Color</label><input type="color" id="editCatColor" value="${editDraftColor}" oninput="editDraftColor=this.value"></div><div class="field"><label>Daily hour cap <span class="valtext" id="editCapVal">${editDraftMax}h</span></label><input type="range" min="1" max="10" step=".5" value="${editDraftMax}" oninput="editDraftMax=parseFloat(this.value);editCapVal.textContent=this.value+'h'"></div><div class="modal-actions"><button class="btn" onclick="toggleArchive('${c.id}');closeCatEditor()">${c.archived?'Unarchive':'Archive'}</button><button class="btn" onclick="closeCatEditor()">Cancel</button><button class="btn primary" onclick="saveEditCat('${c.id}')">Save</button></div>`}
-async function saveEditCat(id){const c=config.categories.find(x=>x.id===id);const n=document.getElementById('editCatName').value.trim();if(n)c.name=n;c.color=editDraftColor;c.max=editDraftMax;await saveConfig();closeCatEditor();render()}
+function renderCatEditor(){const c=config.categories.find(x=>x.id===editingCatId);if(!c)return;catEditModal.innerHTML=`<button class="close-x" onclick="closeCatEditor()">✕</button><h3>Edit category</h3><div class="mdate">${c.name}</div><div class="field"><label>Name</label><input type="text" id="editCatName" value="${c.name.replace(/"/g,'&quot;')}" style="width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px"></div><div class="field"><label>Color</label><input type="color" id="editCatColor" value="${editDraftColor}" oninput="editDraftColor=this.value"></div><div class="modal-actions"><button class="btn" onclick="toggleArchive('${c.id}');closeCatEditor()">${c.archived?'Unarchive':'Archive'}</button><button class="btn" onclick="closeCatEditor()">Cancel</button><button class="btn primary" onclick="saveEditCat('${c.id}')">Save</button></div>`}
+async function saveEditCat(id){const c=config.categories.find(x=>x.id===id);const n=document.getElementById('editCatName').value.trim();if(n)c.name=n;c.color=editDraftColor;delete c.max;await saveConfig();closeCatEditor();render()}
 
 addMilestoneBtn.onclick=openMilestoneModal;
 function openMilestoneModal(){renderMilestoneModal();milestoneOverlay.classList.add('show')}function closeMilestoneModal(){milestoneOverlay.classList.remove('show')}
